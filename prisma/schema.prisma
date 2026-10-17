@@ -1,0 +1,260 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
+// enough when changing adapters.
+// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
+datasource db {
+  provider = "sqlite"
+  url      = "file:dev.sqlite"
+}
+
+model Session {
+  id            String    @id
+  shop          String
+  state         String
+  isOnline      Boolean   @default(false)
+  scope         String?
+  expires       DateTime?
+  accessToken   String
+  userId        BigInt?
+  firstName     String?
+  lastName      String?
+  email         String?
+  accountOwner  Boolean   @default(false)
+  locale        String?
+  collaborator  Boolean?  @default(false)
+  emailVerified Boolean?  @default(false)
+  refreshToken        String?
+  refreshTokenExpires DateTime?
+}
+
+model Shop {
+  id              String           @id @default(cuid())
+  shopDomain      String           @unique
+  name            String?
+  currency        String?
+  ianaTimezone    String?
+  isActive        Boolean          @default(true)
+  dateRangeAnalysis String         @default("Last 90 days")
+  emailSummary    Boolean          @default(true)
+  installedAt     DateTime         @default(now())
+  uninstalledAt   DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  products        Product[]
+  variants        ProductVariant[]
+  orders          Order[]
+  returns         Return[]
+  syncJobs        SyncJob[]
+  interventions   Intervention[]
+
+  @@index([shopDomain])
+}
+
+model Product {
+  id               String           @id @default(cuid())
+  shopId           String
+  shopifyProductId String
+  title            String
+  handle           String?
+  status           String?
+  imageUrl         String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  shop             Shop             @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  variants         ProductVariant[]
+  orderLineItems   OrderLineItem[]
+  returnLineItems  ReturnLineItem[]
+  interventions    Intervention[]
+
+  @@unique([shopId, shopifyProductId])
+  @@index([shopId])
+}
+
+model ProductVariant {
+  id               String           @id @default(cuid())
+  shopId           String
+  productId        String
+  shopifyVariantId String
+  sku              String?
+  title            String
+  price            Float?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  shop             Shop             @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  product          Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderLineItems   OrderLineItem[]
+  returnLineItems  ReturnLineItem[]
+  interventions    Intervention[]
+
+  @@unique([shopId, shopifyVariantId])
+  @@index([shopId])
+  @@index([productId])
+}
+
+model Order {
+  id                 String          @id @default(cuid())
+  shopId             String
+  shopifyOrderId     String
+  orderNumber        String?
+  processedAt        DateTime?
+  currency           String          @default("USD")
+  totalPrice         Float?
+  subtotalPrice      Float?
+  totalDiscounts     Float?
+  financialStatus    String?
+  fulfillmentStatus  String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  shop               Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  lineItems          OrderLineItem[]
+  returns            Return[]
+
+  @@unique([shopId, shopifyOrderId])
+  @@index([shopId])
+  @@index([processedAt])
+}
+
+model OrderLineItem {
+  id                String          @id @default(cuid())
+  orderId           String
+  productId         String?
+  variantId         String?
+  shopifyLineItemId String
+  title             String
+  sku               String?
+  quantity          Int             @default(1)
+  unitPrice         Float?
+  totalPrice        Float?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  order             Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product           Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+  variant           ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  returnLineItems   ReturnLineItem[]
+
+  @@unique([orderId, shopifyLineItemId])
+  @@index([orderId])
+  @@index([productId])
+  @@index([variantId])
+}
+
+model Return {
+  id                 String           @id @default(cuid())
+  shopId             String
+  orderId            String
+  shopifyReturnId    String
+  name               String?
+  status             String           @default("OPEN")
+  totalRefundAmount  Float?
+  currency           String?
+  processedAt        DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  shop               Shop             @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  order              Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  returnLineItems    ReturnLineItem[]
+
+  @@unique([shopId, shopifyReturnId])
+  @@index([shopId])
+  @@index([orderId])
+}
+
+model ReturnLineItem {
+  id                      String          @id @default(cuid())
+  returnId                String
+  orderLineItemId         String?
+  productId               String?
+  variantId               String?
+  shopifyReturnLineItemId String
+  quantity                Int             @default(1)
+  refundableQuantity      Int?
+  refundedQuantity        Int?
+  returnReason            String?
+  returnReasonNote        String?
+  totalWeight             Float?
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+
+  return                  Return          @relation(fields: [returnId], references: [id], onDelete: Cascade)
+  orderLineItem           OrderLineItem?  @relation(fields: [orderLineItemId], references: [id], onDelete: SetNull)
+  product                 Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+  variant                 ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@unique([returnId, shopifyReturnLineItemId])
+  @@index([returnId])
+  @@index([orderLineItemId])
+  @@index([productId])
+  @@index([variantId])
+}
+
+model SyncJob {
+  id                  String    @id @default(cuid())
+  shopId              String
+  syncType            String    @default("HISTORICAL")
+  status              String    @default("PENDING")
+  startedAt           DateTime?
+  completedAt         DateTime?
+  productsSynced      Int       @default(0)
+  ordersSynced        Int       @default(0)
+  returnsSynced       Int       @default(0)
+  lastProcessedCursor String?
+  errorSummary        String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  shop                Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId])
+  @@index([status])
+}
+
+model Intervention {
+  id                    String          @id @default(cuid())
+  shopId                String
+  title                 String
+  description           String?
+  status                String          @default("IN_PROGRESS") // PLANNED, IN_PROGRESS, COMPLETED, PAUSED
+  actionType            String?         // SIZE_GUIDE, IMAGERY, PACKAGING, SPECIFICATIONS, VARIANT_LABEL, OTHER
+  expectedOutcome       String?
+  cause                 String?
+  productId             String?
+  variantId             String?
+  recommendationId      String?
+  startDate             DateTime        @default(now())
+  targetCompletionDate  DateTime?
+  completedAt           DateTime?
+  notes                 String?
+
+  // Baseline metrics snapshot captured at creation
+  baselineReturnRate    Float?
+  baselineReturnedUnits Int?
+  baselineUnitsSold     Int?
+  baselineCauseFrequency Int?
+  baselinePeriod        String?
+  baselineReliable      Boolean         @default(true)
+  baselineNotes         String?
+
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  shop                  Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  product               Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+  variant               ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([shopId])
+  @@index([status])
+  @@index([productId])
+  @@index([variantId])
+}
