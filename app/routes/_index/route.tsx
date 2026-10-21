@@ -30,9 +30,9 @@ export default function App() {
   return (
     <div className={styles.index}>
       <div className={styles.content}>
-        <h1 className={styles.heading}>A short heading about [your app]</h1>
+        <h1 className={styles.heading}>Unturn — Returns Prevention & Intelligence</h1>
         <p className={styles.text}>
-          A tagline about [your app] that describes your value proposition.
+          Transform customer return data into actionable prevention playbooks, track baseline improvements, and protect your merchant margins.
         </p>
         {showForm && (
           <Form className={styles.form} method="post">
@@ -48,16 +48,13 @@ export default function App() {
         )}
         <ul className={styles.list}>
           <li>
-            <strong>Product feature</strong>. Some detail about your feature and
-            its benefit to your customer.
+            <strong>Root-Cause Intelligence</strong>. Uncover hidden return drivers across sizes, fit, defects, and expectations.
           </li>
           <li>
-            <strong>Product feature</strong>. Some detail about your feature and
-            its benefit to your customer.
+            <strong>Defensible Recommendations</strong>. AI-generated, high-confidence interventions to curb return volume.
           </li>
           <li>
-            <strong>Product feature</strong>. Some detail about your feature and
-            its benefit to your customer.
+            <strong>Impact & Baseline Tracking</strong>. Measure quantifiable return rate reductions and net margin saved over time.
           </li>
         </ul>
       </div>

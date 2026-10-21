@@ -382,7 +382,7 @@ export function generateProductRecommendations(
     issueType: product.issueType,
     preventability: evaluation.classification,
     preventabilityRationale: evaluation.rationale,
-    patternExplanation: `${product.returnedUnits} return(s) recorded (${product.returnRate} return rate), with ${sharePct}% attributed to ${primaryCause}.`,
+    patternExplanation: `${product.returnedUnits} return(s) recorded across ${product.unitsSold} sold unit(s) (${product.returnRate} return rate), with ${sharePct}% attributed to ${primaryCause}.`,
     evidence: {
       returnedUnits: product.returnedUnits,
       totalUnitsSold: product.unitsSold,

@@ -112,12 +112,12 @@ export async function sendWeeklySummaryReport(
     return { success: false, error: "No recipient email configured for shop" };
   }
 
-  const analytics = await getOverviewAnalytics(shopDomain, "Last 30 days");
+  const analytics = await getOverviewAnalytics(shopDomain, "Last 7 days");
   const metrics = analytics.metrics;
   const topProducts = analytics.topProducts.slice(0, 3);
   const topCauses = analytics.topCauses.slice(0, 3);
 
-  const subject = `Weekly Return Summary for ${shop.name || shopDomain} — Return Rate: ${metrics.returnRate}`;
+  const subject = `Weekly Return Summary (Last 7 Days) for ${shop.name || shopDomain} — Return Rate: ${metrics.returnRate}`;
   const html = `
     <!DOCTYPE html>
     <html>
@@ -135,39 +135,56 @@ export async function sendWeeklySummaryReport(
           </div>
           <div style="padding: 28px 32px;">
             <h2 style="font-size: 16px; margin: 0 0 16px 0; color: #202223;">Weekly Performance Overview</h2>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
-              <div style="background: #f7f9fa; border: 1px solid #e1e3e5; border-radius: 8px; padding: 16px;">
-                <div style="font-size: 12px; color: #6d7175; font-weight: 500;">Store Return Rate</div>
-                <div style="font-size: 26px; font-weight: 700; color: #202223; margin: 6px 0 2px 0;">${metrics.returnRate}</div>
-                <div style="font-size: 12px; color: #6d7175;">${metrics.returnedUnits} returned of ${metrics.unitsSold} sold</div>
-              </div>
-              <div style="background: #f7f9fa; border: 1px solid #e1e3e5; border-radius: 8px; padding: 16px;">
-                <div style="font-size: 12px; color: #6d7175; font-weight: 500;">Estimated Return Cost</div>
-                <div style="font-size: 26px; font-weight: 700; color: #202223; margin: 6px 0 2px 0;">${metrics.estimatedReturnCost}</div>
-                <div style="font-size: 12px; color: #6d7175;">${metrics.returnedOrders} returned orders</div>
-              </div>
-            </div>
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 24px;">
+              <tr>
+                <td width="48%" style="background: #f7f9fa; border: 1px solid #e1e3e5; border-radius: 8px; padding: 16px; vertical-align: top;">
+                  <div style="font-size: 12px; color: #6d7175; font-weight: 500;">Store Return Rate</div>
+                  <div style="font-size: 26px; font-weight: 700; color: #202223; margin: 6px 0 2px 0;">${metrics.returnRate}</div>
+                  <div style="font-size: 12px; color: #6d7175;">${metrics.returnedUnits} returned of ${metrics.unitsSold} sold</div>
+                </td>
+                <td width="4%">&nbsp;</td>
+                <td width="48%" style="background: #f7f9fa; border: 1px solid #e1e3e5; border-radius: 8px; padding: 16px; vertical-align: top;">
+                  <div style="font-size: 12px; color: #6d7175; font-weight: 500;">Estimated Return Cost</div>
+                  <div style="font-size: 26px; font-weight: 700; color: #202223; margin: 6px 0 2px 0;">${metrics.estimatedReturnCost}</div>
+                  <div style="font-size: 12px; color: #6d7175;">${metrics.returnedOrders} returned orders</div>
+                </td>
+              </tr>
+            </table>
 
             <h3 style="font-size: 14px; margin: 0 0 12px 0; color: #202223;">Top Return Causes</h3>
             <div style="margin-bottom: 24px;">
               ${topCauses.map((c) => `
-                <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: #fafbfc; border-radius: 6px; margin-bottom: 6px; font-size: 13px;">
-                  <span style="font-weight: 500; color: #202223;">${c.cause}</span>
-                  <span style="color: #6d7175;">${c.returns} returns (${c.share})</span>
-                </div>
+                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: #fafbfc; border: 1px solid #edeff0; border-radius: 6px; margin-bottom: 8px;">
+                  <tr>
+                    <td align="left" style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #202223;">
+                      ${c.cause}
+                    </td>
+                    <td align="right" style="padding: 10px 14px; font-size: 13px; color: #6d7175; white-space: nowrap;">
+                      ${c.returns} returns (${c.share})
+                    </td>
+                  </tr>
+                </table>
               `).join("")}
             </div>
 
             <h3 style="font-size: 14px; margin: 0 0 12px 0; color: #202223;">Top Impact Products</h3>
             <div style="margin-bottom: 24px;">
               ${topProducts.map((p) => `
-                <div style="padding: 10px 12px; border: 1px solid #edeff0; border-radius: 6px; margin-bottom: 8px; font-size: 13px;">
-                  <div style="display: flex; justify-content: space-between; font-weight: 600; color: #202223;">
-                    <span>${p.name}</span>
-                    <span style="color: #d72c0d;">${p.returnRate} return rate</span>
-                  </div>
-                  <div style="color: #6d7175; font-size: 12px; margin-top: 3px;">Primary root cause: <strong>${p.mainIssue}</strong></div>
-                </div>
+                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: #ffffff; border: 1px solid #edeff0; border-radius: 8px; margin-bottom: 10px;">
+                  <tr>
+                    <td align="left" style="padding: 12px 14px 4px 14px; font-size: 13.5px; font-weight: 700; color: #202223;">
+                      ${p.name}
+                    </td>
+                    <td align="right" style="padding: 12px 14px 4px 14px; font-size: 13px; font-weight: 700; color: #d72c0d; white-space: nowrap;">
+                      ${p.returnRate} return rate
+                    </td>
+                  </tr>
+                  <tr>
+                    <td colspan="2" align="left" style="padding: 0 14px 12px 14px; color: #6d7175; font-size: 12px;">
+                      Primary root cause: <strong style="color: #202223;">${p.mainIssue}</strong>
+                    </td>
+                  </tr>
+                </table>
               `).join("")}
             </div>
 

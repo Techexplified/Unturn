@@ -46,22 +46,4 @@ export interface Recommendation {
   };
 }
 
-export interface Intervention {
-  id: string;
-  title: string;
-  description: string;
-  productName: string;
-  productImage: string;
-  cause: string;
-  startedOn: string;
-  impactRate: string;
-  impactLabel: string;
-  trendStatus: "positive" | "slight" | "neutral" | "negative" | "stopped";
-  trendBadge: string;
-}
 
-// Deprecated mock arrays kept empty for backwards compatibility. Real data is loaded from the database.
-export const PRODUCTS_DATA: ProductReturnData[] = [];
-export const CAUSES_DATA: ReturnCause[] = [];
-export const RECOMMENDATIONS_DATA: Recommendation[] = [];
-export const INTERVENTIONS_DATA: Intervention[] = [];

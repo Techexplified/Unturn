@@ -111,7 +111,7 @@ const aiRecommendationCache = new Map<
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 /**
- * Fetch and construct comprehensive product analytics context from DB or mock fallback
+ * Fetch and construct comprehensive product analytics context from database
  */
 export async function fetchProductAnalyticsContext(
   shopDomain: string,

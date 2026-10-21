@@ -618,7 +618,15 @@ export default function InterventionsPage() {
           overflow: "hidden",
         }}
       >
-        <div className="unturn-card-body" style={{ padding: 0, overflowX: "auto" }}>
+        <div
+          className="unturn-card-body unturn-table-scroll-container"
+          style={{
+            padding: 0,
+            overflowX: "auto",
+            overflowY: "auto",
+            maxHeight: 460,
+          }}
+        >
           {displayedItems.length > 0 ? (
             <table
               className="unturn-table"
@@ -629,11 +637,19 @@ export default function InterventionsPage() {
                 textAlign: "left",
               }}
             >
-              <thead>
+              <thead
+                style={{
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 10,
+                  backgroundColor: "var(--ut-bg-card, #ffffff)",
+                  boxShadow: "0 1px 0 var(--ut-border, #e2e8f0)",
+                }}
+              >
                 <tr
                   style={{
                     borderBottom: "1px solid var(--ut-border, #e2e8f0)",
-                    backgroundColor: "transparent",
+                    backgroundColor: "var(--ut-bg-card, #ffffff)",
                   }}
                 >
                   <th
@@ -764,8 +780,8 @@ export default function InterventionsPage() {
                                   fontSize: 12,
                                   color: "var(--ut-text-secondary, #64748b)",
                                   marginTop: 3,
-                                  maxWidth: 380,
-                                  lineHeight: 1.4,
+                                  maxWidth: 420,
+                                  lineHeight: 1.45,
                                 }}
                               >
                                 {item.description}

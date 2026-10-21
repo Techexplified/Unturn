@@ -30,11 +30,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     syncStatus,
     dateRangeAnalysis: shop?.dateRangeAnalysis || "Last 90 days",
     emailSummary: shop?.emailSummary ?? true,
-    shopDetails: {
-      name: shop?.name || shopDomain.replace(".myshopify.com", ""),
-      currency: shop?.currency || "USD",
-      timezone: shop?.ianaTimezone || "UTC",
-    },
   };
 };
 

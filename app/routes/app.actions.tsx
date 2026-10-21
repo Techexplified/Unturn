@@ -11,13 +11,14 @@ import { KnowWhyModal, TakeActionModal } from "../components/ActionModals";
 import { getAllStoreRecommendations } from "../services/recommendations.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  let shopDomain = "demo.myshopify.com";
+  let shopDomain = "cartmend.myshopify.com";
   try {
     const { session } = await authenticate.admin(request);
     shopDomain = session.shop;
   } catch (err) {
     if (process.env.NODE_ENV === "development" && !new URL(request.url).searchParams.get("embedded")) {
-      shopDomain = "demo.myshopify.com";
+      const firstShop = await db.shop.findFirst({ where: { isActive: true } });
+      shopDomain = firstShop?.shopDomain || "cartmend.myshopify.com";
     } else {
       throw err;
     }
@@ -445,7 +446,7 @@ export default function RecommendedActionsPage() {
       </div>
 
       {/* Recommendations Table Card */}
-      <div className="unturn-card">
+      <div className="unturn-card" style={{ overflow: "hidden" }}>
         <div
           style={{
             padding: "9px 16px",
@@ -455,6 +456,10 @@ export default function RecommendedActionsPage() {
             fontSize: 11.5,
             fontWeight: 500,
             color: "var(--ut-text-secondary)",
+            backgroundColor: "var(--ut-bg-card)",
+            position: "sticky",
+            top: 0,
+            zIndex: 5,
           }}
         >
           <div style={{ flex: 1.3 }}>Recommendation</div>
@@ -462,7 +467,15 @@ export default function RecommendedActionsPage() {
           <div style={{ width: 220, textAlign: "right" }}>Your action</div>
         </div>
 
-        <div className="unturn-card-body">
+        <div
+          className="unturn-card-body unturn-table-scroll-container"
+          style={{
+            maxHeight: 480,
+            overflowY: "auto",
+            overflowX: "hidden",
+            padding: 0,
+          }}
+        >
           {sortedRecs.length > 0 ? (
             sortedRecs.map((rec, index) => (
             <div key={rec.id} className="unturn-rec-row">

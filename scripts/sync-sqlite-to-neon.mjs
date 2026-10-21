@@ -28,11 +28,11 @@ async function syncData() {
   const shops = await sqlite.shop.findMany();
   console.log(`Syncing ${shops.length} shops...`);
   for (const s of shops) {
-    const { id, shopDomain, name, currency, ianaTimezone, isActive, installedAt, uninstalledAt, createdAt, updatedAt } = s;
+    const { id, shopDomain, name, currency, ianaTimezone, dateRangeAnalysis, emailSummary, isActive, installedAt, uninstalledAt, createdAt, updatedAt } = s;
     await neon.shop.upsert({
       where: { shopDomain },
-      update: { name, currency, ianaTimezone, isActive, installedAt, uninstalledAt, updatedAt },
-      create: { id, shopDomain, name, currency, ianaTimezone, isActive, installedAt, uninstalledAt, createdAt, updatedAt },
+      update: { name, currency, ianaTimezone, dateRangeAnalysis, emailSummary, isActive, installedAt, uninstalledAt, updatedAt },
+      create: { id, shopDomain, name, currency, ianaTimezone, dateRangeAnalysis, emailSummary, isActive, installedAt, uninstalledAt, createdAt, updatedAt },
     });
   }
 

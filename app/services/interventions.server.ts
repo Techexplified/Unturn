@@ -580,6 +580,94 @@ export async function calculateBeforeAfterPerformance(
 }
 
 /**
+ * Compute an updated statement for an intervention reflecting live product return numbers,
+ * order numbers, and post-intervention tracking data instead of static pre-intervention snapshot.
+ */
+export async function computeDynamicProductStatement(
+  shopId: string,
+  item: any
+): Promise<string> {
+  if (!item.productId) {
+    return item.description || "";
+  }
+
+  // 1. Fetch live orders and units sold for this product
+  const orderLines = await db.orderLineItem.findMany({
+    where: {
+      order: { shopId },
+      productId: item.productId,
+    },
+    include: { order: true },
+  });
+
+  const totalUnitsSold = orderLines.reduce((acc, ol) => acc + ol.quantity, 0);
+  const totalOrders = new Set(orderLines.map((ol) => ol.orderId)).size;
+
+  // 2. Fetch live returns for this product
+  const returnLines = await db.returnLineItem.findMany({
+    where: {
+      return: { shopId },
+      OR: [
+        { productId: item.productId },
+        { orderLineItem: { productId: item.productId } },
+      ],
+    },
+    include: { return: true },
+  });
+
+  const totalReturnedUnits = returnLines.reduce((acc, rl) => acc + rl.quantity, 0);
+
+  // If store has live order or return records for this product, build dynamic statement
+  if (totalUnitsSold > 0 || totalReturnedUnits > 0) {
+    const liveRate =
+      totalUnitsSold > 0
+        ? ((totalReturnedUnits / totalUnitsSold) * 100).toFixed(1)
+        : totalReturnedUnits > 0
+        ? "100.0"
+        : "0.0";
+
+    const targetCause = item.cause || "Identified issue";
+    let causeCount = 0;
+    for (const rl of returnLines) {
+      const reason = (rl.returnReason || rl.returnReasonNote || "").toLowerCase();
+      if (
+        reason.includes(targetCause.toLowerCase()) ||
+        targetCause.toLowerCase().includes(reason)
+      ) {
+        causeCount += rl.quantity;
+      }
+    }
+    const causeShare =
+      totalReturnedUnits > 0
+        ? ((Math.max(causeCount, 1) / totalReturnedUnits) * 100).toFixed(1)
+        : "100.0";
+
+    // 3. Post-launch metrics (orders and returns processed on or after intervention startDate)
+    const postOrderLines = orderLines.filter(
+      (ol) => ol.order?.processedAt && new Date(ol.order.processedAt) >= new Date(item.startDate)
+    );
+    const postSold = postOrderLines.reduce((acc, ol) => acc + ol.quantity, 0);
+    const postOrdersCount = new Set(postOrderLines.map((ol) => ol.orderId)).size;
+
+    const postReturnLines = returnLines.filter(
+      (rl) => rl.return?.processedAt && new Date(rl.return.processedAt) >= new Date(item.startDate)
+    );
+    const postReturned = postReturnLines.reduce((acc, rl) => acc + rl.quantity, 0);
+
+    let statement = `${totalReturnedUnits} return(s) recorded across ${totalOrders} order(s) (${totalUnitsSold} unit(s) sold, ${liveRate}% return rate), with ${causeShare}% attributed to ${targetCause}.`;
+
+    if (postSold > 0 || postReturned > 0) {
+      statement += ` Since start: ${postReturned} return(s) in ${postOrdersCount} order(s).`;
+    }
+
+    return statement;
+  }
+
+  // Fallback to stored description if no live orders/returns in DB
+  return item.description || "";
+}
+
+/**
  * Get all interventions for a shop with optional filtering and search
  */
 export async function getInterventions(
@@ -629,10 +717,12 @@ export async function getInterventions(
 
   return Promise.all(
     filtered.map(async (item) => {
+      const dynamicStatement = await computeDynamicProductStatement(shop.id, item);
       const performance = await calculateBeforeAfterPerformance(shop.id, item);
       const impact = await calculateInterventionImpact(shopDomain, item.id);
       return {
         ...item,
+        description: dynamicStatement || item.description,
         performance,
         impact,
       };
@@ -663,11 +753,13 @@ export async function getInterventionById(shopDomain: string, id: string) {
 
   if (!intervention) return null;
 
+  const dynamicStatement = await computeDynamicProductStatement(shop.id, intervention);
   const performance = await calculateBeforeAfterPerformance(shop.id, intervention);
   const impact = await calculateInterventionImpact(shopDomain, intervention.id);
 
   return {
     ...intervention,
+    description: dynamicStatement || intervention.description,
     performance,
     impact,
   };

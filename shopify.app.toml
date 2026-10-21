@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "d514edab3efadfde9a2128290d60fddf"
-name = "unturn"
+name = "Unturn"
 application_url = "https://example.com"
 embedded = true
 
@@ -64,5 +64,4 @@ api_version = "2027-01"
 redirect_urls = [ "https://example.com/api/auth" ]
 
 [build]
-include_config_on_deploy = true
 automatically_update_urls_on_dev = true

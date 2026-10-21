@@ -13,8 +13,6 @@ import { ProductDetailDrawer } from "../components/ProductDetailDrawer";
 import { CauseDetailDrawer } from "../components/CauseDetailDrawer";
 import { getSyncStatus, runShopSync, ensureShopRecord, type SyncStatusResult } from "../services/sync.server";
 import { getOverviewAnalytics } from "../services/analytics.server";
-import { getDefaultDateRange } from "../utils/dateUtils";
-
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
 
@@ -150,15 +148,6 @@ export default function OverviewPage() {
             <span>{isSubmitting ? "Refreshing..." : "Refresh"}</span>
           </button>
         }
-        exportData={{
-          products: analytics?.allProducts.map((p: any) => ({
-            name: p.name,
-            sku: p.sku,
-            returnRate: p.returnRate,
-            returns: p.returns,
-            mainIssue: p.mainIssue,
-          })),
-        }}
       />
 
       <div style={{ opacity: isLoading ? 0.6 : 1, transition: "opacity 0.15s ease" }}>
