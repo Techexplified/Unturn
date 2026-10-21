@@ -117,7 +117,7 @@ export async function sendWeeklySummaryReport(
   const topProducts = analytics.topProducts.slice(0, 3);
   const topCauses = analytics.topCauses.slice(0, 3);
 
-  const subject = `Weekly Return Summary (Last 7 Days) for ${shop.name || shopDomain} — Return Rate: ${metrics.returnRate}`;
+  const subject = `Weekly Return Summary (Last 7 Days) for ${shop.name || shopDomain} - Return Rate: ${metrics.returnRate}`;
   const html = `
     <!DOCTYPE html>
     <html>
