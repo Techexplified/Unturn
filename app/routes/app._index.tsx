@@ -30,7 +30,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     });
 
     if (!hasData && !completedJob && !url.searchParams.get("skip_onboarding")) {
-      return redirect("/app/onboarding");
+      const search = url.searchParams.toString();
+      return redirect(search ? `/app/onboarding?${search}` : "/app/onboarding");
     }
 
     // Auto-sync if last sync was completed more than 30 seconds ago

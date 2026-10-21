@@ -184,7 +184,7 @@ export default function OnboardingPage() {
   };
 
   const handleGoToOverview = () => {
-    navigate("/app");
+    navigate(`/app${window.location.search}`);
   };
 
   const handleResetForTesting = () => {
