@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
-import { Outlet, useLoaderData, useRouteError } from "react-router";
+import type { HeadersFunction, LoaderFunctionArgs, MetaFunction } from "react-router";
+import { Outlet, useLoaderData, redirect } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { AppProvider } from "@shopify/shopify-app-react-router/react";
 
@@ -9,21 +9,42 @@ import { authenticate } from "../shopify.server";
 import "../styles/unturn.css";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const url = new URL(request.url);
+  const shopFromUrl = url.searchParams.get("shop");
+  const isEmbedded = url.searchParams.get("embedded") === "1";
+
+  // If accessed directly in browser outside Shopify Admin with no shop context, redirect to store login
+  if (!shopFromUrl && !isEmbedded && process.env.NODE_ENV === "production") {
+    throw redirect("/");
+  }
+
   try {
-    await authenticate.admin(request);
+    const { session } = await authenticate.admin(request);
+    return {
+      apiKey: process.env.SHOPIFY_API_KEY || "",
+      shop: session.shop,
+    };
   } catch (err) {
-    if (process.env.NODE_ENV === "development" && !new URL(request.url).searchParams.get("embedded")) {
-      return { apiKey: process.env.SHOPIFY_API_KEY || "" };
+    if (process.env.NODE_ENV === "development" && !isEmbedded) {
+      return { apiKey: process.env.SHOPIFY_API_KEY || "", shop: shopFromUrl || "" };
     }
     throw err;
   }
+};
 
-  // eslint-disable-next-line no-undef
-  return { apiKey: process.env.SHOPIFY_API_KEY || "" };
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  const tags: Array<{ name: string; content: string }> = [];
+  if (data?.apiKey) {
+    tags.push({ name: "shopify-api-key", content: data.apiKey });
+  }
+  if (data?.shop) {
+    tags.push({ name: "shopify-shop", content: data.shop });
+  }
+  return tags;
 };
 
 export default function App() {
-  const { apiKey } = useLoaderData<typeof loader>();
+  const { apiKey, shop } = useLoaderData<typeof loader>();
 
   useEffect(() => {
     // Sync theme from localStorage
@@ -44,6 +65,7 @@ export default function App() {
 
   return (
     <AppProvider apiKey={apiKey}>
+      {shop && <meta name="shopify-shop" content={shop} />}
       <s-app-nav>
         <s-link href="/app">Overview</s-link>
         <s-link href="/app/actions">Recommended Actions</s-link>

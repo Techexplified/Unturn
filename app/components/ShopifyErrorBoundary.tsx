@@ -6,6 +6,30 @@ export function ShopifyAppBridgeHtml({ html }: { html: string }) {
 
   useEffect(() => {
     if (!ref.current || !html) return;
+
+    // 1. Try to find shop from URL search params
+    const params = new URLSearchParams(window.location.search);
+    let shop = params.get("shop");
+
+    // 2. Fallback: try to extract shop from the html payload
+    if (!shop) {
+      const match = html.match(/shop=([a-zA-Z0-9.\-_]+(?:\.myshopify\.com)?)/i);
+      if (match && match[1]) {
+        shop = match[1];
+      }
+    }
+
+    if (shop) {
+      let metaShop = document.querySelector('meta[name="shopify-shop"]');
+      if (!metaShop) {
+        metaShop = document.createElement("meta");
+        metaShop.setAttribute("name", "shopify-shop");
+        document.head.appendChild(metaShop);
+      }
+      metaShop.setAttribute("content", shop);
+    }
+
+    // 3. Re-execute scripts
     const scripts = ref.current.querySelectorAll("script");
     scripts.forEach((oldScript) => {
       const newScript = document.createElement("script");

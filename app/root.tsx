@@ -1,7 +1,28 @@
-import { Links, Meta, Outlet, Scripts, ScrollRestoration, isRouteErrorResponse, useRouteError } from "react-router";
+import type { LoaderFunctionArgs, MetaFunction } from "react-router";
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, isRouteErrorResponse, useRouteError, useLoaderData } from "react-router";
 import { ShopifyAppBridgeHtml } from "./components/ShopifyErrorBoundary";
 
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const url = new URL(request.url);
+  const shop = url.searchParams.get("shop") || "";
+  const apiKey = process.env.SHOPIFY_API_KEY || "";
+  return { apiKey, shop };
+};
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  const tags: Array<{ name: string; content: string }> = [];
+  if (data?.apiKey) {
+    tags.push({ name: "shopify-api-key", content: data.apiKey });
+  }
+  if (data?.shop) {
+    tags.push({ name: "shopify-shop", content: data.shop });
+  }
+  return tags;
+};
+
 export default function App() {
+  const data = useLoaderData<typeof loader>();
+
   return (
     <html lang="en">
       <head>
@@ -11,6 +32,27 @@ export default function App() {
         <link
           rel="stylesheet"
           href="https://cdn.shopify.com/static/fonts/inter/v4/styles.css"
+        />
+        {data?.apiKey && <meta name="shopify-api-key" content={data.apiKey} />}
+        {data?.shop && <meta name="shopify-shop" content={data.shop} />}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                var params = new URLSearchParams(window.location.search);
+                var shop = params.get('shop');
+                if (shop) {
+                  var meta = document.querySelector('meta[name="shopify-shop"]');
+                  if (!meta) {
+                    meta = document.createElement('meta');
+                    meta.name = 'shopify-shop';
+                    document.head.appendChild(meta);
+                  }
+                  meta.content = shop;
+                }
+              })();
+            `,
+          }}
         />
         <Meta />
         <Links />
