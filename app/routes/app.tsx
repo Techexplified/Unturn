@@ -12,13 +12,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   try {
     const { session } = await authenticate.admin(request);
     return {
-      apiKey: process.env.SHOPIFY_API_KEY || "",
+      apiKey: process.env.SHOPIFY_API_KEY || "d514edab3efadfde9a2128290d60fddf",
       shop: session.shop,
     };
   } catch (err) {
     if (process.env.NODE_ENV === "development" && !new URL(request.url).searchParams.get("embedded")) {
       return {
-        apiKey: process.env.SHOPIFY_API_KEY || "",
+        apiKey: process.env.SHOPIFY_API_KEY || "d514edab3efadfde9a2128290d60fddf",
         shop: new URL(request.url).searchParams.get("shop") || "",
       };
     }
@@ -59,7 +59,6 @@ export default function App() {
 
   return (
     <AppProvider apiKey={apiKey}>
-      {shop && <meta name="shopify-shop" content={shop} />}
       <s-app-nav>
         <s-link href="/app">Overview</s-link>
         <s-link href="/app/actions">Recommended Actions</s-link>

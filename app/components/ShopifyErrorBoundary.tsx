@@ -2,46 +2,39 @@ import { useEffect, useRef } from "react";
 import { isRouteErrorResponse, useRouteError } from "react-router";
 
 export function ShopifyAppBridgeHtml({ html }: { html: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
-    if (!ref.current || !html) return;
+    if (!html) return;
 
-    // 1. Try to find shop from URL search params
-    const params = new URLSearchParams(window.location.search);
-    let shop = params.get("shop");
-
-    // 2. Fallback: try to extract shop from the html payload
-    if (!shop) {
-      const match = html.match(/shop=([a-zA-Z0-9.\-_]+(?:\.myshopify\.com)?)/i);
-      if (match && match[1]) {
-        shop = match[1];
+    // Check if the HTML contains window.open(destination, target)
+    const windowOpenMatch = html.match(/window\.open\((['"])(.*?)\1(?:,\s*(['"])(.*?)\3)?\)/);
+    if (windowOpenMatch && windowOpenMatch[2]) {
+      const destination = windowOpenMatch[2];
+      const target = windowOpenMatch[4] || "_top";
+      if (target === "_top" && window.top) {
+        window.top.location.href = destination;
+      } else {
+        window.location.href = destination;
       }
+      return;
     }
 
-    if (shop) {
-      let metaShop = document.querySelector('meta[name="shopify-shop"]');
-      if (!metaShop) {
-        metaShop = document.createElement("meta");
-        metaShop.setAttribute("name", "shopify-shop");
-        document.head.appendChild(metaShop);
+    // Check for location.href redirects
+    const locationMatch = html.match(/location\.href\s*=\s*(['"])(.*?)\1/);
+    if (locationMatch && locationMatch[2]) {
+      const destination = locationMatch[2];
+      if (window.top) {
+        window.top.location.href = destination;
+      } else {
+        window.location.href = destination;
       }
-      metaShop.setAttribute("content", shop);
     }
-
-    // 3. Re-execute scripts
-    const scripts = ref.current.querySelectorAll("script");
-    scripts.forEach((oldScript) => {
-      const newScript = document.createElement("script");
-      Array.from(oldScript.attributes).forEach((attr) => {
-        newScript.setAttribute(attr.name, attr.value);
-      });
-      newScript.textContent = oldScript.textContent;
-      oldScript.parentNode?.replaceChild(newScript, oldScript);
-    });
   }, [html]);
 
-  return <div ref={ref} dangerouslySetInnerHTML={{ __html: html || "Handling response..." }} />;
+  return (
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "80vh", fontFamily: "sans-serif", color: "#5c5f62" }}>
+      <p>Redirecting to Shopify Admin...</p>
+    </div>
+  );
 }
 
 export function RouteErrorBoundary() {
@@ -49,7 +42,10 @@ export function RouteErrorBoundary() {
 
   if (isRouteErrorResponse(error)) {
     const html = typeof error.data === "string" ? error.data : "";
-    return <ShopifyAppBridgeHtml html={html} />;
+    if (html.includes("window.open") || html.includes("location.href")) {
+      return <ShopifyAppBridgeHtml html={html} />;
+    }
+    return <div dangerouslySetInnerHTML={{ __html: html }} />;
   }
 
   return (

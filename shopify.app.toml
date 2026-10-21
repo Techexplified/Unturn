@@ -63,6 +63,7 @@ api_version = "2027-01"
 [auth]
 redirect_urls = [
   "https://unturn.vercel.app/auth/callback",
+  "https://unturn.vercel.app/auth/shopify/callback",
   "https://unturn.vercel.app/api/auth"
 ]
 
