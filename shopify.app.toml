@@ -2,7 +2,7 @@
 
 client_id = "d514edab3efadfde9a2128290d60fddf"
 name = "Unturn"
-application_url = "https://example.com"
+application_url = "https://unturn.vercel.app"
 embedded = true
 
 [access_scopes]
@@ -61,7 +61,10 @@ api_version = "2027-01"
   compliance_topics = [ "shop/redact" ]
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+redirect_urls = [
+  "https://unturn.vercel.app/auth/callback",
+  "https://unturn.vercel.app/api/auth"
+]
 
 [build]
 automatically_update_urls_on_dev = true

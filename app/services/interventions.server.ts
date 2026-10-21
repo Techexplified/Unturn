@@ -842,23 +842,6 @@ export async function updateIntervention(
     },
   });
 
-  // Mirror to Neon DB in background if available
-  (async () => {
-    try {
-      const { createRequire } = await import("module");
-      const req = createRequire(import.meta.url);
-      const { PrismaClient: NeonClient } = req("@prisma/neon-client");
-      const neon = new NeonClient();
-      await neon.intervention.update({
-        where: { id },
-        data: dataToUpdate,
-      });
-      await neon.$disconnect();
-    } catch {
-      // background sync is best-effort
-    }
-  })().catch(() => {});
-
   return updated;
 }
 
