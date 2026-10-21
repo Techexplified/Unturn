@@ -8,16 +8,8 @@ import styles from "./styles.module.css";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
-  const shop = url.searchParams.get("shop");
 
-  if (shop) {
-    const isEmbedded = url.searchParams.get("embedded") === "1";
-    // If opened directly outside Shopify Admin iframe, redirect into Shopify Admin embedded app
-    if (!isEmbedded) {
-      const cleanShop = shop.replace(".myshopify.com", "");
-      const apiKey = process.env.SHOPIFY_API_KEY || "d514edab3efadfde9a2128290d60fddf";
-      throw redirect(`https://admin.shopify.com/store/${cleanShop}/apps/${apiKey}`);
-    }
+  if (url.searchParams.get("shop")) {
     throw redirect(`/app?${url.searchParams.toString()}`);
   }
 

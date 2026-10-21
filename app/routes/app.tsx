@@ -9,22 +9,6 @@ import { authenticate } from "../shopify.server";
 import "../styles/unturn.css";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const url = new URL(request.url);
-  const shopFromUrl = url.searchParams.get("shop");
-  const isEmbedded = url.searchParams.get("embedded") === "1";
-
-  // If accessed directly in browser outside Shopify Admin with a shop parameter, redirect into Shopify Admin
-  if (shopFromUrl && !isEmbedded && process.env.NODE_ENV === "production") {
-    const cleanShop = shopFromUrl.replace(".myshopify.com", "");
-    const apiKey = process.env.SHOPIFY_API_KEY || "d514edab3efadfde9a2128290d60fddf";
-    throw redirect(`https://admin.shopify.com/store/${cleanShop}/apps/${apiKey}`);
-  }
-
-  // If accessed directly in browser outside Shopify Admin with no shop context, redirect to store login
-  if (!shopFromUrl && !isEmbedded && process.env.NODE_ENV === "production") {
-    throw redirect("/");
-  }
-
   try {
     const { session } = await authenticate.admin(request);
     return {
@@ -32,8 +16,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       shop: session.shop,
     };
   } catch (err) {
-    if (process.env.NODE_ENV === "development" && !isEmbedded) {
-      return { apiKey: process.env.SHOPIFY_API_KEY || "", shop: shopFromUrl || "" };
+    if (process.env.NODE_ENV === "development" && !new URL(request.url).searchParams.get("embedded")) {
+      return {
+        apiKey: process.env.SHOPIFY_API_KEY || "",
+        shop: new URL(request.url).searchParams.get("shop") || "",
+      };
     }
     throw err;
   }
