@@ -52,6 +52,9 @@ export default defineConfig({
     reactRouter(),
     tsconfigPaths(),
   ],
+  esbuild: {
+    keepNames: true,
+  },
   build: {
     assetsInlineLimit: 0,
   },
