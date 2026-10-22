@@ -28,40 +28,37 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const shop = await db.shop.findUnique({ where: { shopDomain } });
   const activeProductKeys = new Set<string>();
 
-  let activeInterventionsCount = 0;
-  if (shop) {
-    const activeInterventions = await db.intervention.findMany({
-      where: {
-        shopId: shop.id,
-        status: { in: ["IN_PROGRESS", "PLANNED"] },
-      },
-      include: { product: true },
-    });
-    activeInterventionsCount = activeInterventions.length;
+  const [activeInterventions, lastSyncJob, liveRecs] = shop
+    ? await Promise.all([
+        db.intervention.findMany({
+          where: {
+            shopId: shop.id,
+            status: { in: ["IN_PROGRESS", "PLANNED"] },
+          },
+          include: { product: true },
+        }),
+        db.syncJob.findFirst({
+          where: { shopId: shop.id },
+          orderBy: { createdAt: "desc" },
+        }),
+        getAllStoreRecommendations(shopDomain),
+      ])
+    : [[], null, []];
 
-    for (const item of activeInterventions) {
-      if (item.productId) activeProductKeys.add(item.productId.toLowerCase());
-      if (item.product?.id) activeProductKeys.add(item.product.id.toLowerCase());
-      if (item.product?.title) activeProductKeys.add(item.product.title.toLowerCase());
-      if (item.product?.handle) activeProductKeys.add(item.product.handle.toLowerCase());
-      if (item.recommendationId) activeProductKeys.add(item.recommendationId.toLowerCase());
-    }
+  const activeInterventionsCount = activeInterventions.length;
+  for (const item of activeInterventions) {
+    if (item.productId) activeProductKeys.add(item.productId.toLowerCase());
+    if (item.product?.id) activeProductKeys.add(item.product.id.toLowerCase());
+    if (item.product?.title) activeProductKeys.add(item.product.title.toLowerCase());
+    if (item.product?.handle) activeProductKeys.add(item.product.handle.toLowerCase());
+    if (item.recommendationId) activeProductKeys.add(item.recommendationId.toLowerCase());
   }
-
-  // Diagnostic check on sync jobs for Protected Customer Data (PCD) error status
-  const lastSyncJob = shop
-    ? await db.syncJob.findFirst({
-        where: { shopId: shop.id },
-        orderBy: { createdAt: "desc" },
-      })
-    : null;
 
   const isPcdError = Boolean(
     lastSyncJob?.errorSummary?.includes("Order object") ||
     lastSyncJob?.errorSummary?.includes("protected-customer-data")
   );
 
-  const liveRecs = await getAllStoreRecommendations(shopDomain);
   const currencySymbol = shop?.currency === "INR" ? "₹" : shop?.currency === "EUR" ? "€" : "$";
 
   let rawRecommendations: Recommendation[] = [];

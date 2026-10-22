@@ -342,7 +342,7 @@ export async function ensureShopRecord(
     });
   }
 
-  if (admin) {
+  if (admin && (!shop.name || !shop.currency || !shop.ianaTimezone)) {
     try {
       const shopData = await executeGraphQLWithRetry(admin, SHOP_DETAILS_QUERY);
       if (shopData?.shop) {

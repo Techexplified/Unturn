@@ -18,15 +18,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   try {
     const { session, admin } = await authenticate.admin(request);
-    await ensureShopRecord(session.shop, admin);
-    const shop = await db.shop.findUnique({ where: { shopDomain: session.shop } });
+    const [shop, syncStatus] = await Promise.all([
+      ensureShopRecord(session.shop, admin),
+      getSyncStatus(session.shop),
+    ]);
+
     const selectedRange = url.searchParams.get("range") || shop?.dateRangeAnalysis || "Last 90 days";
-    const syncStatus = await getSyncStatus(session.shop);
 
     // If new install (no store data or completed sync), guide merchant to Onboarding first
     const hasData = (syncStatus?.counts?.orders ?? 0) > 0 || (syncStatus?.counts?.products ?? 0) > 0;
     const completedJob = await db.syncJob.findFirst({
       where: { shop: { shopDomain: session.shop }, status: "COMPLETED" },
+      orderBy: { completedAt: "desc" },
     });
 
     if (!hasData && !completedJob && !url.searchParams.get("skip_onboarding")) {
@@ -34,25 +37,26 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       return redirect(search ? `/app/onboarding?${search}` : "/app/onboarding");
     }
 
-    // Auto-sync if last sync was completed more than 30 seconds ago
-    const lastSyncJob = await db.syncJob.findFirst({
-      where: { shop: { shopDomain: session.shop }, status: "COMPLETED" },
-      orderBy: { completedAt: "desc" },
-    });
-
-    const isStale = !lastSyncJob?.completedAt || (Date.now() - new Date(lastSyncJob.completedAt).getTime() > 30_000);
+    // Auto-sync: if no data yet, sync synchronously; otherwise trigger in background if older than 10 mins
+    const isStale = !completedJob?.completedAt || (Date.now() - new Date(completedJob.completedAt).getTime() > 10 * 60_000);
     if (isStale && admin) {
-      try {
-        await runShopSync(session.shop, admin, { force: false });
-      } catch (syncErr: any) {
-        console.warn("[Overview Auto-Sync Warning]", syncErr?.message);
+      if (!hasData) {
+        try {
+          await runShopSync(session.shop, admin, { force: false });
+        } catch (syncErr: any) {
+          console.warn("[Overview Sync Warning]", syncErr?.message);
+        }
+      } else {
+        // Non-blocking background sync so the page transition is instant
+        runShopSync(session.shop, admin, { force: false }).catch((syncErr: any) => {
+          console.warn("[Overview Background Sync Warning]", syncErr?.message);
+        });
       }
     }
 
-    const updatedSyncStatus = await getSyncStatus(session.shop);
     const analytics = await getOverviewAnalytics(session.shop, selectedRange);
 
-    return { shop: session.shop, syncStatus: updatedSyncStatus || syncStatus, analytics, selectedRange };
+    return { shop: session.shop, syncStatus, analytics, selectedRange };
   } catch (err) {
     if (process.env.NODE_ENV === "development" && !new URL(request.url).searchParams.get("embedded")) {
       const firstShop = await db.shop.findFirst({ where: { isActive: true } });

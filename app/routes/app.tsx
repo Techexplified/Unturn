@@ -33,6 +33,21 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 };
 
+export function shouldRevalidate({
+  currentUrl,
+  nextUrl,
+  formMethod,
+}: {
+  currentUrl: URL;
+  nextUrl: URL;
+  formMethod?: string;
+}) {
+  if (formMethod && formMethod !== "GET") {
+    return true;
+  }
+  return currentUrl.searchParams.get("shop") !== nextUrl.searchParams.get("shop");
+}
+
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const tags: Array<{ name: string; content: string }> = [];
   if (data?.apiKey) {
