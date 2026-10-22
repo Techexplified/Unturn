@@ -91,12 +91,12 @@ export default function App() {
         <p className={styles.text}>
           Transform customer return data into actionable prevention playbooks, track baseline improvements, and protect your merchant margins.
         </p>
-        <div style={{ margin: "20px 0" }}>
+        <div style={{ margin: "24px 0", display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
           <a
             href="/app"
             style={{
               display: "inline-block",
-              padding: "10px 20px",
+              padding: "12px 24px",
               backgroundColor: "#2563eb",
               color: "#ffffff",
               borderRadius: "8px",
@@ -105,21 +105,12 @@ export default function App() {
               fontSize: "14px",
             }}
           >
-            Go to Unturn Overview →
+            Open in Shopify Admin →
           </a>
         </div>
-        {showForm && (
-          <Form className={styles.form} method="post">
-            <label className={styles.label}>
-              <span>Shop domain</span>
-              <input className={styles.input} type="text" name="shop" />
-              <span>{errors?.shop ?? "e.g: my-shop-domain.myshopify.com"}</span>
-            </label>
-            <button className={styles.button} type="submit">
-              Log in
-            </button>
-          </Form>
-        )}
+        <p style={{ fontSize: "13px", color: "var(--color-text-subdued, #6b7280)", margin: "0 auto 24px", maxWidth: "480px" }}>
+          Unturn is an embedded Shopify application. Install directly from the Shopify App Store or access it via your Shopify Admin Apps menu.
+        </p>
         <ul className={styles.list}>
           <li>
             <strong>Root-Cause Intelligence</strong>. Uncover hidden return drivers across sizes, fit, defects, and expectations.

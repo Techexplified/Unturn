@@ -575,14 +575,6 @@ export async function runShopSync(
   const effectiveRange = options.dateRange || shop.dateRangeAnalysis || "Last 90 days";
   const cutoffDate = getDateCutoffForRange(effectiveRange, options.referenceDate);
 
-  // Prune any existing records that fall outside the store's configured retention window
-  if (cutoffDate) {
-    try {
-      await pruneOldStoreData(shop.id, cutoffDate);
-    } catch (pruneErr) {
-      console.warn(`[Unturn Sync] Retention prune error for ${shopDomain}:`, pruneErr);
-    }
-  }
 
   // Prevent duplicate concurrent sync jobs
   const runningJob = await db.syncJob.findFirst({

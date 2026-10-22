@@ -40,24 +40,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (intent === "update_date_range") {
     const range = formData.get("dateRangeAnalysis")?.toString() || "Last 90 days";
-    const shop = await db.shop.update({
+    await db.shop.update({
       where: { shopDomain: session.shop },
       data: { dateRangeAnalysis: range },
     });
 
-    const cutoffDate = getDateCutoffForRange(range);
-    let prunedCounts = { deletedOrders: 0, deletedReturns: 0 };
-    if (cutoffDate) {
-      prunedCounts = await pruneOldStoreData(shop.id, cutoffDate);
-    }
-
     const updatedStatus = await getSyncStatus(session.shop);
-    const pruneMsg = prunedCounts.deletedOrders > 0
-      ? ` Pruned ${prunedCounts.deletedOrders} orders older than ${range.toLowerCase()}.`
-      : "";
     return {
       success: true,
-      message: `Store data retention and analysis set to ${range}.${pruneMsg}`,
+      message: `Data analysis window updated to ${range}.`,
       syncStatus: updatedStatus,
     };
   }

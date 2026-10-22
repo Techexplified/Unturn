@@ -34,6 +34,7 @@ export default function App() {
         />
         {data?.apiKey && <meta name="shopify-api-key" content={data.apiKey} />}
         {data?.shop && <meta name="shopify-shop" content={data.shop} />}
+        <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
         <Meta />
         <Links />
       </head>
