@@ -38,6 +38,7 @@ export function ProductDetailDrawer({
     if (!isOpen || !productId) {
       setData(null);
       setError(null);
+      setActiveWhyRec(null);
       return;
     }
 
@@ -501,12 +502,15 @@ export function ProductDetailDrawer({
         initialData={createInitialData}
       />
 
-      <KnowWhyModal
-        rec={activeWhyRec}
-        productId={activeWhyRec?.productId || data?.id}
-        productTitle={data?.title}
-        onClose={() => setActiveWhyRec(null)}
-      />
+      {activeWhyRec && (
+        <KnowWhyModal
+          isOpen={Boolean(activeWhyRec)}
+          rec={activeWhyRec}
+          productId={activeWhyRec.productId || data?.id}
+          productTitle={activeWhyRec.productName || data?.title}
+          onClose={() => setActiveWhyRec(null)}
+        />
+      )}
     </div>
   );
 }

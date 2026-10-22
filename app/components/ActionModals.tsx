@@ -23,6 +23,7 @@ interface DynamicAIData {
 }
 
 interface KnowWhyModalProps {
+  isOpen?: boolean;
   rec: Recommendation | null;
   productId?: string | null;
   productTitle?: string | null;
@@ -31,6 +32,7 @@ interface KnowWhyModalProps {
 }
 
 export function KnowWhyModal({
+  isOpen,
   rec,
   productId,
   productTitle,
@@ -41,7 +43,7 @@ export function KnowWhyModal({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!rec && !productId) {
+    if (isOpen === false || (!rec && !productId)) {
       setDynamicData(null);
       setLoading(false);
       return;
@@ -98,9 +100,9 @@ export function KnowWhyModal({
     return () => {
       isMounted = false;
     };
-  }, [rec, productId]);
+  }, [isOpen, rec, productId]);
 
-  if (!rec && !productId) return null;
+  if (isOpen === false || (!rec && !productId)) return null;
 
   const currentExplanation =
     dynamicData?.explanation ||

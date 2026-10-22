@@ -187,10 +187,6 @@ export default function OnboardingPage() {
     navigate(`/app${window.location.search}`);
   };
 
-  const handleResetForTesting = () => {
-    setCurrentStep(1);
-    setPipelinePhase("idle");
-  };
 
   const isWorking = pipelinePhase === "connecting" || pipelinePhase === "syncing" || pipelinePhase === "analyzing";
 
@@ -221,17 +217,6 @@ export default function OnboardingPage() {
             We'll analyze your data and show you what's causing returns and what you can do about it.
           </p>
         </div>
-
-        {/* Quick test control */}
-        <button
-          type="button"
-          onClick={handleResetForTesting}
-          className="unturn-btn-secondary"
-          style={{ fontSize: 11, padding: "5px 10px", color: "var(--ut-text-muted)" }}
-          title="Reset onboarding steps for demonstration"
-        >
-          Reset Demo
-        </button>
       </div>
 
       {/* 4 Steps Container */}
