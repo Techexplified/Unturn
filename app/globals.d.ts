@@ -4,6 +4,7 @@ declare module "*.css";
 
 declare namespace JSX {
   interface IntrinsicElements {
+    "ui-nav-menu": any;
     "s-app-nav": any;
     "s-link": any;
     "s-page": any;

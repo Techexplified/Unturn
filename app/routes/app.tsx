@@ -6,19 +6,10 @@ import { AppProvider } from "@shopify/shopify-app-react-router/react";
 
 import { RouteErrorBoundary } from "../components/ShopifyErrorBoundary";
 import { authenticate } from "../shopify.server";
+import db from "../db.server";
 import "../styles/unturn.css";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const url = new URL(request.url);
-  const shopParam = url.searchParams.get("shop");
-  const hostParam = url.searchParams.get("host");
-  const isEmbedded = url.searchParams.get("embedded") === "1";
-
-  // If accessed directly in browser outside Shopify Admin with no shop context, redirect to login
-  if (!shopParam && !hostParam && !isEmbedded && process.env.NODE_ENV === "production") {
-    throw redirect("/");
-  }
-
   try {
     const { session } = await authenticate.admin(request);
     return {
@@ -26,10 +17,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       shop: session.shop,
     };
   } catch (err) {
-    if (process.env.NODE_ENV === "development" && !isEmbedded) {
+    if (err instanceof Response) {
+      throw err;
+    }
+    if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") {
+      const url = new URL(request.url);
+      const shopParam = url.searchParams.get("shop");
+      const firstShop = await db.shop.findFirst({ where: { isActive: true } });
       return {
         apiKey: process.env.SHOPIFY_API_KEY || "d514edab3efadfde9a2128290d60fddf",
-        shop: shopParam || "",
+        shop: shopParam || firstShop?.shopDomain || "cartmend.myshopify.com",
       };
     }
     throw err;
@@ -69,6 +66,12 @@ export default function App() {
 
   return (
     <AppProvider apiKey={apiKey}>
+      <ui-nav-menu>
+        <a href="/app" rel="home">Overview</a>
+        <a href="/app/actions">Recommended Actions</a>
+        <a href="/app/interventions">Interventions</a>
+        <a href="/app/settings">Settings</a>
+      </ui-nav-menu>
       <s-app-nav>
         <s-link href="/app">Overview</s-link>
         <s-link href="/app/actions">Recommended Actions</s-link>
